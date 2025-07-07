@@ -1,0 +1,26 @@
+meta {
+  name: logs_nginx
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{uri}}/pods/nginx-85497484cc-46zwg/logs?sinceTime=2024-12-31T20:32:00.0Z&tailLines=100&timestamps=true&follow=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  sinceTime: 2024-12-31T20:32:00.0Z
+  tailLines: 100
+  timestamps: true
+  follow: false
+  ~sinceSeconds: 90
+}
+
+body:json {
+  {
+    "mobile": "+251921951592",
+    "password": "123123"
+  }
+}

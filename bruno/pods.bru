@@ -1,0 +1,18 @@
+meta {
+  name: pods
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{uri}}/pods
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "mobile": "+251921951592",
+    "password": "123123"
+  }
+}

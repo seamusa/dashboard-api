@@ -1,0 +1,26 @@
+meta {
+  name: logs_param
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{uri}}/pods/dashboard-prod-api-78cff574c7-7xm5f/logs?sinceTime=2024-12-31T20:32:00.0Z&tailLines=100&timestamps=true&follow=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  sinceTime: 2024-12-31T20:32:00.0Z
+  tailLines: 100
+  timestamps: true
+  follow: false
+  ~sinceSeconds: 90
+}
+
+body:json {
+  {
+    "mobile": "+251921951592",
+    "password": "123123"
+  }
+}

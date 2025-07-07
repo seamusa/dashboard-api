@@ -1,0 +1,9 @@
+# files
+secrets.txt
+.DS_Store
+.env
+
+# folders
+/kubernetes
+/app/bin
+/app/pkg

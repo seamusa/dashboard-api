@@ -1,0 +1,31 @@
+{
+  "name": "api",
+  "dockerFile": "Dockerfile",
+  "forwardPorts": [
+    5000
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "docsmsft.docs-markdown",
+        "golang.Go"
+      ],
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          }
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.detectIndentation": false,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+      }
+    }
+  },
+  "remoteEnv": {
+    "GO111MODULE": "on"
+  },
+  "postStartCommand": "curl -LsS https://aka.ms/InstallAzureCLIDeb | bash && az aks install-cli"
+}
