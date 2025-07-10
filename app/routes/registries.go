@@ -55,17 +55,17 @@ func RegisterRegistriesRoutes(router *gin.Engine) {
 		}
 
 		fmt.Println("Webhook Target Repository: ", webhook.Target.Repository)
-		parts := strings.SplitN(webhook.Target.Repository, "/", 3)
-		fmt.Println("Parts: ", parts)
 
-		company := parts[0]
+		company := strings.SplitN(webhook.Target.Repository, "/", 2)[0]
 		var namespace, deploymentName, imagePath string
 
 		if company == "cheche" {
-			namespace = company
-			deploymentName = strings.ReplaceAll(parts[1]+"/"+parts[2], "/", "-")
+			parts := strings.SplitN(webhook.Target.Repository, "/", 2)
+			namespace = parts[0]
+			deploymentName = strings.ReplaceAll(parts[1], "/", "-")
 			imagePath = fmt.Sprintf("%s/%s:%s", webhook.Request.Host, webhook.Target.Repository, webhook.Target.Tag)
 		} else {
+			parts := strings.SplitN(webhook.Target.Repository, "/", 3)
 			namespace = parts[1]
 			deploymentName = strings.ReplaceAll(parts[2], "/", "-")
 			imagePath = fmt.Sprintf("%s/%s:%s", webhook.Request.Host, webhook.Target.Repository, webhook.Target.Tag)

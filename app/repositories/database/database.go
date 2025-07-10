@@ -9,7 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"sync"
+	"regexp"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
@@ -34,11 +34,11 @@ import (
 // '''
 
 type PostgreSQLFlexQueryStoreRuntime struct {
-	Category      string     `json:"category"`
-	Location      string     `json:"location"`
-	OperationName string     `json:"operationName"`
+	Category      string     `json:"-"`
+	Location      string     `json:"-"`
+	OperationName string     `json:"-"`
 	Properties    Properties `json:"properties"`
-	ResourceID    string     `json:"resourceId"`
+	ResourceID    string     `json:"-"`
 	Time          time.Time  `json:"time"`
 }
 
@@ -125,6 +125,15 @@ func downloadBlob(ctx context.Context, client *azblob.Client, path string) []Pos
 		var model PostgreSQLFlexQueryStoreRuntime
 		err := json.Unmarshal(scanner.Bytes(), &model)
 		if err != nil {
+			// Try to fix time fields by replacing missing timezone with Z
+			fixed := scanner.Bytes()
+			fixedStr := string(fixed)
+			// Add Z if missing at the end of time fields
+			fixedStr = fixTimeFields(fixedStr)
+			err = json.Unmarshal([]byte(fixedStr), &model)
+		}
+		if err != nil {
+			fmt.Println("Error unmarshalling JSON:", err, "for path:", path, "data:", string(scanner.Bytes()))
 			handleError(err)
 		}
 		models = append(models, model)
@@ -137,52 +146,15 @@ func downloadBlob(ctx context.Context, client *azblob.Client, path string) []Pos
 	return models
 }
 
-func main_test() {
-	client, err := connectToAzureStorage()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	ctx := context.Background()
-
-	inputStartTime := "2024-12-30T08:11:23.000Z"
-	parsedInputStartTime, err := time.Parse(time.RFC3339, inputStartTime)
-	if err != nil {
-		fmt.Println("Error parsing date:", err)
-		return
-	}
-	parsedInputStartTime = parsedInputStartTime.Truncate(time.Hour)
-
-	inputEndTime := "2024-12-30T12:11:23.000Z"
-	parsedInputEndTime, err := time.Parse(time.RFC3339, inputEndTime)
-	if err != nil {
-		fmt.Println("Error parsing date:", err)
-		return
-	}
-	parsedInputEndTime = parsedInputEndTime.Truncate(time.Hour)
-
-	paths := generatePaths(parsedInputStartTime, parsedInputEndTime)
-
-	var wg sync.WaitGroup
-	results := make(chan []PostgreSQLFlexQueryStoreRuntime, len(paths))
-	var storeRuntimes []PostgreSQLFlexQueryStoreRuntime
-
-	for _, path := range paths {
-		wg.Add(1)
-		go func(path string) {
-			defer wg.Done()
-			result := downloadBlob(ctx, client, path)
-			results <- result
-		}(path)
-	}
-
-	wg.Wait()
-	close(results)
-
-	for result := range results {
-		storeRuntimes = append(storeRuntimes, result...)
-	}
-
-	fmt.Println(storeRuntimes)
-
+// fixTimeFields adds 'Z' to time fields if missing
+func fixTimeFields(jsonStr string) string {
+	re := regexp.MustCompile(`"(time|Start_time|End_time)":"([0-9T:\-\.]+)"`)
+	return re.ReplaceAllStringFunc(jsonStr, func(s string) string {
+		// Check if ends with Z or timezone
+		if s[len(s)-2:] == "Z" || s[len(s)-6:] == "+00:00" || s[len(s)-3:] == "+00" {
+			return s
+		}
+		// Insert Z before the last quote
+		return s[:len(s)-1] + "Z" + `"`
+	})
 }
